@@ -54,7 +54,7 @@ async def on_ready():
                         # print("######################")
                         member_with_no_video = False
                         for member in channel.members:
-                            if not channel.voice_states[member.id].self_video and not member.bot:
+                            if not channel.voice_states[member.id].self_video and not member.bot and not channel.voice_states[member.id].self_deaf:
                                 member_with_no_video = True
                                 try:
                                     await member.send(
@@ -62,7 +62,7 @@ async def on_ready():
                                         "cheeks. "
                                         ":wink:")
                                     print("L-am avertizat pe ", member.name)
-                                except Exception as e:
+                                except Exception:
                                     print("N-am putut sa trimit mesaj lui", member.name)
                             else:
                                 video_already_on.append(member.id)
@@ -78,14 +78,14 @@ async def on_ready():
                                         not (member.id in video_already_on)) and not member.bot:
                                     try:
                                         await member.send("Ai pornit, bravo! :hugging:")
-                                    except Exception as e:
+                                    except Exception:
                                         print("N-am putut sa trimit mesaj lui", member.name)
-                                elif not new_channel.voice_states[member.id].self_video and not member.bot:
+                                elif not new_channel.voice_states[member.id].self_video and not member.bot and not channel.voice_states[member.id].self_deaf:
                                     await member.move_to(None)
                                     try:
                                         await member.send("N-ai ce cauta pe canal fara webcam! :police_officer:")
                                         print("I-am dat kick lui ", member.name)
-                                    except Exception as e:
+                                    except Exception:
                                         print("N-am putut sa trimit mesaj lui", member.name)
         time.sleep(10)
 
