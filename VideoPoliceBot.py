@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import time
 
-TOKEN = 'YourToken'
+TOKEN = 'Nzk2MzE3MzgwMTMyNDcwODA0.X_WKWg.mDmwliNoxV72ZCKSfh8IfVfIYmc'
 intents = discord.Intents.default()
 intents.members = True
 VideoPoliceBot = discord.Client(intents=intents)
@@ -25,6 +25,7 @@ async def on_ready():
     print('------')
     while True:
         for channel in VideoPoliceBot.get_all_channels():
+            channel = await VideoPoliceBot.fetch_channel(channel.id)
             nr_members = 0
             channel_members = []
             video_already_on = []
@@ -51,26 +52,42 @@ async def on_ready():
                 if video_number + no_video_number != 0:
                     if video_number / (video_number + no_video_number) >= 0.5:
                         # print("######################")
+                        member_with_no_video = False
                         for member in channel.members:
-                            if not channel.voice_states[member.id].self_video:
-                                await member.send(
-                                    "Salut, ai un minut sa pornesti webcam-ul, otherwise I will clap your cheeks. "
-                                    ":wink:")
+                            if not channel.voice_states[member.id].self_video and not member.bot:
+                                member_with_no_video = True
+                                try:
+                                    await member.send(
+                                        "Salut, ai 15 secunde sa pornesti webcam-ul, otherwise I will clap your "
+                                        "cheeks. "
+                                        ":wink:")
+                                    print("L-am avertizat pe ", member.name)
+                                except Exception as e:
+                                    print("N-am putut sa trimit mesaj lui", member.name)
                             else:
                                 video_already_on.append(member.id)
+                        if member_with_no_video:
+                            t1 = time.time()
+                            while True:
+                                if (time.time() - t1) >= 15:
+                                    break
 
-                        t1 = time.time()
-                        while True:
-                            if (time.time() - t1) >= 5:
-                                break
-
-                        for member in channel.members:
-                            new_channel = await VideoPoliceBot.fetch_channel(channel.id)
-                            if (new_channel.voice_states[member.id].self_video == True) and (
-                                    not (member.id in video_already_on)):
-                                await member.send("Ai pornit, bravo! :hugging:")
-                            elif not new_channel.voice_states[member.id].self_video:
-                                await member.move_to(None)
+                            for member in channel.members:
+                                new_channel = await VideoPoliceBot.fetch_channel(channel.id)
+                                if (new_channel.voice_states[member.id].self_video is True) and (
+                                        not (member.id in video_already_on)) and not member.bot:
+                                    try:
+                                        await member.send("Ai pornit, bravo! :hugging:")
+                                    except Exception as e:
+                                        print("N-am putut sa trimit mesaj lui", member.name)
+                                elif not new_channel.voice_states[member.id].self_video and not member.bot:
+                                    await member.move_to(None)
+                                    try:
+                                        await member.send("N-ai ce cauta pe canal fara webcam! :police_officer:")
+                                        print("I-am dat kick lui ", member.name)
+                                    except Exception as e:
+                                        print("N-am putut sa trimit mesaj lui", member.name)
         time.sleep(10)
+
 
 VideoPoliceBot.run(TOKEN)
