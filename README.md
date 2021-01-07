@@ -1,6 +1,4 @@
 # VideoPoliceBot
-A simple bot for Discord
-
 The bot works as follows:
 
 -It finds all the voice channels on a server, then it starts iterating through all the members of each channel;
