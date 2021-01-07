@@ -26,17 +26,12 @@ async def on_ready():
     while True:
         for channel in VideoPoliceBot.get_all_channels():
             channel = await VideoPoliceBot.fetch_channel(channel.id)
-            nr_members = 0
             channel_members = []
             video_already_on = []
             if type(channel) == discord.channel.VoiceChannel:
                 video_number = 0
                 no_video_number = 0
                 # print(channel)
-                for y in channel.members:
-                    nr_members += 1
-                    # if y != None:
-                    # print(y, y.id, y.name, y.bot)
                 for i in channel.voice_states:
                     # print(i)
                     if channel.voice_states[i].self_video:
