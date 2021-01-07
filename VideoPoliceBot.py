@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import time
 
-TOKEN = 'Nzk2MzE3MzgwMTMyNDcwODA0.X_WKWg.e2Bd_4nqMiy1P6G6BFwdpL1yFIo'
+TOKEN = 'YourToken'
 intents = discord.Intents.default()
 intents.members = True
 VideoPoliceBot = discord.Client(intents=intents)
