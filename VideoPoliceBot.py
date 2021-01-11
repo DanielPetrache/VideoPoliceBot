@@ -84,5 +84,9 @@ async def on_ready():
                                         print("N-am putut sa trimit mesaj lui", member.name)
         time.sleep(10)
 
-
+@VideoPoliceBot.event
+async def on_message(message):
+    if message.author.id == 134946430317101057 or message.author.id == 237625040181526528:
+        await message.reply(file="ciocoflender.jpg")
+        
 VideoPoliceBot.run(TOKEN)
