@@ -1,23 +1,14 @@
 import discord
 from discord.ext import commands
 import time
+import random
 
-TOKEN = ''
+TOKEN = 'Nzk2MzE3MzgwMTMyNDcwODA0.X_WKWg.EBj7bKGzh0t6gwtDoH8EaWtpJ-I'
 intents = discord.Intents.default()
 intents.members = True
 VideoPoliceBot = discord.Client(intents=intents)
-
-
-class MyClient(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.command()
-    async def connect(self, ctx, *, channel: discord.VoiceChannel):
-        if ctx.voice_client is not None:
-            return await ctx.voice_client.move_to(channel)
-        await channel.connect()
-
+andries_counter = 0
+radu_counter = 0
 
 @VideoPoliceBot.event
 async def on_ready():
@@ -49,7 +40,8 @@ async def on_ready():
                         # print("######################")
                         member_with_no_video = False
                         for member in channel.members:
-                            if not channel.voice_states[member.id].self_video and not member.bot and not channel.voice_states[member.id].self_deaf:
+                            if not channel.voice_states[member.id].self_video and not member.bot and not \
+                                    channel.voice_states[member.id].self_deaf:
                                 member_with_no_video = True
                                 try:
                                     await member.send(
@@ -75,7 +67,8 @@ async def on_ready():
                                         await member.send("Ai pornit, bravo! :hugging:")
                                     except Exception:
                                         print("N-am putut sa trimit mesaj lui", member.name)
-                                elif not new_channel.voice_states[member.id].self_video and not member.bot and not channel.voice_states[member.id].self_deaf:
+                                elif not new_channel.voice_states[member.id].self_video and not member.bot and not \
+                                        channel.voice_states[member.id].self_deaf:
                                     await member.move_to(None)
                                     try:
                                         await member.send("N-ai ce cauta pe canal fara webcam! :police_officer:")
@@ -84,11 +77,21 @@ async def on_ready():
                                         print("N-am putut sa trimit mesaj lui", member.name)
         time.sleep(10)
 
+
 @VideoPoliceBot.event
 async def on_message(message):
+    global radu_counter, andries_counter
     if message.author.id == 134946430317101057 or message.author.id == 237625040181526528:
-        channel = message.channel
-        await channel.send(file=discord.File('ciocoflender.jpg'))
-        print("L-am facut ciocoflender pe",message.author.name)
+        if message.author.id == 134946430317101057:
+            radu_counter += 1
+            if random.randint(1, 50 + radu_counter) < 25:
+                await message.channel.send(file=discord.File('ciocoflender.jpg'))
+                print("L-am facut ciocoflender pe", message.author.name)
+        else:
+            andries_counter += 1
+            if random.randint(1, 50 + andries_counter) < 25:
+                await message.channel.send(file=discord.File('ciocoflender.jpg'))
+                print("L-am facut ciocoflender pe", message.author.name)
+
 
 VideoPoliceBot.run(TOKEN)
