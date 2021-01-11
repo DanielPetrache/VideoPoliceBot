@@ -79,7 +79,7 @@ async def on_ready():
                                     await member.move_to(None)
                                     try:
                                         await member.send("N-ai ce cauta pe canal fara webcam! :police_officer:")
-                                        print("I-am dat kick lui ", member.name)
+                                        print("I-am dat kick lui", member.name)
                                     except Exception:
                                         print("N-am putut sa trimit mesaj lui", member.name)
         time.sleep(10)
