@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import time
 
-TOKEN = 'YOURTOKEN'
+TOKEN = ''
 intents = discord.Intents.default()
 intents.members = True
 VideoPoliceBot = discord.Client(intents=intents)
@@ -79,7 +79,7 @@ async def on_ready():
                                     await member.move_to(None)
                                     try:
                                         await member.send("N-ai ce cauta pe canal fara webcam! :police_officer:")
-                                        print("I-am dat kick lui", member.name)
+                                        print("I-am dat kick lui ", member.name)
                                     except Exception:
                                         print("N-am putut sa trimit mesaj lui", member.name)
         time.sleep(10)
@@ -87,6 +87,8 @@ async def on_ready():
 @VideoPoliceBot.event
 async def on_message(message):
     if message.author.id == 134946430317101057 or message.author.id == 237625040181526528:
-        await message.reply(file="ciocoflender.jpg")
-        
+        channel = message.channel
+        await channel.send(file=discord.File('ciocoflender.jpg'))
+        print("L-am facut ciocoflender pe",message.author.name)
+
 VideoPoliceBot.run(TOKEN)
