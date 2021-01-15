@@ -122,16 +122,13 @@ async def on_message(message):
     if ciocoflender_trigger == 1:
         global radu_counter, andries_counter
         if message.author.id == 134946430317101057 or message.author.id == 237625040181526528:
+            if random.randint(1, 10 ) == 1:
+                await message.channel.send(file=discord.File('ciocoflender.jpg'))
+                print("L-am facut ciocoflender pe", message.author.name)
             if message.author.id == 134946430317101057:
                 radu_counter += 1
-                if random.randint(1, 10 ) == 1:
-                    await message.channel.send(file=discord.File('ciocoflender.jpg'))
-                    print("L-am facut ciocoflender pe", message.author.name)
             else:
                 andries_counter += 1
-                if random.randint(1, 10 ) == 1:
-                    await message.channel.send(file=discord.File('ciocoflender.jpg'))
-                    print("L-am facut ciocoflender pe", message.author.name)
     else:
         pass
 
