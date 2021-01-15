@@ -115,13 +115,13 @@ async def ciocoflender(ctx, value: str):
     global ciocoflender_trigger
     if value == 'on':
         if ciocoflender_trigger == 1:
-            await ctx.send("Deja ma uit dupa ciocoflenderi! :TeTai:")
+            await ctx.send(":face_with_symbols_over_mouth: Deja ma uit dupa ciocoflenderi! :face_with_symbols_over_mouth:")
         else:
             ciocoflender_trigger = 1
             await ctx.send(":eyes: Ma uit dupa ciocoflenderi! :eyes:")
     else:
         if ciocoflender_trigger == 0:
-            await ctx.send("Sunt oprit deja! :TeTai:")
+            await ctx.send(":face_with_symbols_over_mouth: Sunt oprit deja! :face_with_symbols_over_mouth:")
         else:
             ciocoflender_trigger = 0
             await ctx.send(":sleeping: Nu ma mai uit dupa ciocoflenderi! :sleeping:")
