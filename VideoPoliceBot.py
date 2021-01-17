@@ -9,7 +9,9 @@ TOKEN = ''
 intents = discord.Intents.default()
 intents.members = True
 descript = "!help - help me daddy \n!surveillance (on/off) - porneste politia sau o opreste\n!ciocoflender (on/off) - " \
-           "se uita sau nu dupa ciocoflenderi\n!populate_db - numai pentru cine trebuie "
+           "se uita sau nu dupa ciocoflenderi\n!populate_db - numai pentru cine trebuie\n!top_emoji (user, " \
+           "emoji_count) - afiseaza un top al celor emoji_count cele mai " \
+           "folosite emoji-uri de catre user (emoji_count <= 15) "
 VideoPoliceBot = commands.Bot(command_prefix='!', description=descript, intents=intents)
 
 trigger_instanta = 0
