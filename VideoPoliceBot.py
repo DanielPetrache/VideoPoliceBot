@@ -56,47 +56,50 @@ async def populate_db(ctx):
 
 @VideoPoliceBot.command()
 async def top_emoji(ctx, user: str, number: int):
-    if number > 15:
-        await ctx.send("Ia-o mai usor, incearca un nr <= 15")
+    if type(number) != int or number < 1:
+        await ctx.send("Trebuie sa folosesti un numar intreg intre 1 si 15!")
     else:
-        id_user = "xxx"
-        member_dict = {}
-        for member in ctx.guild.members:
-            if not member.bot:
-                if member.nick:
-                    member_dict[member.name.replace(" ", "")] = member.nick.replace(" ", "")
-                else:
-                    member_dict[member.name.replace(" ", "")] = "nuamnickname"
-
-                try:
-                    if user.lower() == member.name.lower().replace(" ","") \
-                            or user.lower() == member.nick.lower().replace(" ", ""):
-                        id_user = str(member.id)
-                        break
-                except AttributeError:
-                    if user.lower() == member.name.lower().replace(" ", ""):
-                        id_user = str(member.id)
-                        break
-
-        if id_user == "xxx":
-            s = "Nu exista " + user + " pe server"
-            await ctx.send(s)
+        if number > 15:
+            await ctx.send("Ia-o mai usor, incearca un nr <= 15")
         else:
-            conn = sqlite3.connect('emojis.db')
-            curs = conn.cursor()
-            curs.execute("PRAGMA foreign_keys;")
-            nr = 1
-            for row in curs.execute("SELECT user_name, emoji_name, emoji_id, counter FROM emoji_count WHERE "
-                                    "user_id = ? ORDER BY counter DESC LIMIT ?", (id_user, number)):
-                if int(row[2]) < 999999999:
-                    message = "Locul #" + str(nr) + " " + row[1] + ": " + str(row[3]) + " utilizari"
-                else:
-                    message = "Locul #" + str(nr) + " <:" + row[1] + ":" + row[2] + "> : " + str(row[3]) + " utilizari"
-                nr += 1
-                await ctx.send(message)
-                # print(row)
-            conn.commit()
-            conn.close()
+            id_user = "xxx"
+            member_dict = {}
+            for member in ctx.guild.members:
+                if not member.bot:
+                    if member.nick:
+                        member_dict[member.name.replace(" ", "")] = member.nick.replace(" ", "")
+                    else:
+                        member_dict[member.name.replace(" ", "")] = "nuamnickname"
+
+                    try:
+                        if user.lower() == member.name.lower().replace(" ","") \
+                                or user.lower() == member.nick.lower().replace(" ", ""):
+                            id_user = str(member.id)
+                            break
+                    except AttributeError:
+                        if user.lower() == member.name.lower().replace(" ", ""):
+                            id_user = str(member.id)
+                            break
+
+            if id_user == "xxx":
+                s = "Nu exista " + user + " pe server"
+                await ctx.send(s)
+            else:
+                conn = sqlite3.connect('emojis.db')
+                curs = conn.cursor()
+                curs.execute("PRAGMA foreign_keys;")
+                nr = 1
+                for row in curs.execute("SELECT user_name, emoji_name, emoji_id, counter FROM emoji_count WHERE "
+                                        "user_id = ? ORDER BY counter DESC LIMIT ?", (id_user, number)):
+                    if int(row[2]) < 999999999:
+                        message = "Locul #" + str(nr) + " " + row[1] + ": " + str(row[3]) + " utilizari"
+                    else:
+                        message = "Locul #" + str(nr) + " <:" + row[1] + ":" + row[2] + "> : " + str(row[3]) + " utilizari"
+                    nr += 1
+                    await ctx.send(message)
+                    # print(row)
+                conn.commit()
+                conn.close()
 
 
 @VideoPoliceBot.command()
