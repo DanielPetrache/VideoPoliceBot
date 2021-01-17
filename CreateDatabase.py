@@ -30,7 +30,6 @@ tables_creation = ['''CREATE TABLE IF NOT EXISTS users(
 
                   
 for x in tables_creation:
-    print(x)
     c.execute(x)
 
 conn.commit()
