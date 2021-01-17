@@ -2,16 +2,16 @@ import discord
 from discord.ext import commands
 import time
 import random
+import sqlite3
+import numpy
 
 TOKEN = ''
 intents = discord.Intents.default()
 intents.members = True
 descript = "!help - help me daddy \n!surveillance (on/off) - porneste politia sau o opreste\n!ciocoflender (on/off) - " \
-           "se uita sau nu dupa ciocoflenderi "
+           "se uita sau nu dupa ciocoflenderi\n!populate_db - numai pentru cine trebuie "
 VideoPoliceBot = commands.Bot(command_prefix='!', description=descript, intents=intents)
 
-andries_counter = 0
-radu_counter = 0
 trigger_instanta = 0
 ciocoflender_trigger = 0
 
@@ -21,8 +21,80 @@ async def on_ready():
     print('Logged in as')
     print(VideoPoliceBot.user.name)
     print(VideoPoliceBot.user.id)
-    print('SUNT BOT ON')
     print('-----------')
+
+
+@VideoPoliceBot.command()
+async def populate_db(ctx):
+    if ctx.author == ctx.guild.owner:
+        conn = sqlite3.connect('emojis.db')
+        curs = conn.cursor()
+        curs.execute("PRAGMA foreign_keys;")
+        members_list = ctx.guild.members
+        emojis_list = ctx.guild.emojis
+
+        for member in members_list:
+            if not member.bot:
+                curs.execute("INSERT INTO users (id, user_name) VALUES (?, ?)", (member.id, member.name))
+
+        for emoji in emojis_list:
+            curs.execute("INSERT INTO emojis (id, emoji_name) VALUES (?, ?)", (emoji.id, emoji.name,))
+
+        for member in members_list:
+            if not member.bot:
+                for emoji in emojis_list:
+                    curs.execute("INSERT INTO emoji_count (user_id, emoji_id, user_name, emoji_name, counter) VALUES "
+                                 "(?, ?, ?, ?, ?)", (member.id, emoji.id, member.name, emoji.name, 0))
+        conn.commit()
+        conn.close()
+        await ctx.send("Am populat baza de date")
+    else:
+        await ctx.send(":stuck_out_tongue: Nu ai voie sa folosesti comanda! :stuck_out_tongue:")
+
+
+@VideoPoliceBot.command()
+async def top_emoji(ctx, user: str, number: int):
+    if number > 15:
+        await ctx.send("Ia-o mai usor, incearca un nr <= 15")
+    else:
+        id_user = "xxx"
+        member_dict = {}
+        for member in ctx.guild.members:
+            if not member.bot:
+                if member.nick:
+                    member_dict[member.name.replace(" ", "")] = member.nick.replace(" ", "")
+                else:
+                    member_dict[member.name.replace(" ", "")] = "nuamnickname"
+
+                try:
+                    if user.lower() == member.name.lower().replace(" ","") \
+                            or user.lower() == member.nick.lower().replace(" ", ""):
+                        id_user = str(member.id)
+                        break
+                except AttributeError:
+                    if user.lower() == member.name.lower().replace(" ", ""):
+                        id_user = str(member.id)
+                        break
+
+        if id_user == "xxx":
+            s = "Nu exista " + user + " pe server"
+            await ctx.send(s)
+        else:
+            conn = sqlite3.connect('emojis.db')
+            curs = conn.cursor()
+            curs.execute("PRAGMA foreign_keys;")
+            nr = 1
+            for row in curs.execute("SELECT user_name, emoji_name, emoji_id, counter FROM emoji_count WHERE "
+                                    "user_id = ? ORDER BY counter DESC LIMIT ?", (id_user, number)):
+                if int(row[2]) < 999999999:
+                    message = "Locul #" + str(nr) + " " + row[1] + ": " + str(row[3]) + " utilizari"
+                else:
+                    message = "Locul #" + str(nr) + " <:" + row[1] + ":" + row[2] + "> : " + str(row[3]) + " utilizari"
+                nr += 1
+                await ctx.send(message)
+                # print(row)
+            conn.commit()
+            conn.close()
 
 
 @VideoPoliceBot.command()
@@ -115,7 +187,8 @@ async def ciocoflender(ctx, value: str):
     global ciocoflender_trigger
     if value == 'on':
         if ciocoflender_trigger == 1:
-            await ctx.send(":face_with_symbols_over_mouth: Deja ma uit dupa ciocoflenderi! :face_with_symbols_over_mouth:")
+            await ctx.send(
+                ":face_with_symbols_over_mouth: Deja ma uit dupa ciocoflenderi! :face_with_symbols_over_mouth:")
         else:
             ciocoflender_trigger = 1
             await ctx.send(":eyes: Ma uit dupa ciocoflenderi! :eyes:")
@@ -127,22 +200,249 @@ async def ciocoflender(ctx, value: str):
             await ctx.send(":sleeping: Nu ma mai uit dupa ciocoflenderi! :sleeping:")
 
 
+# Counts the emojis from a regular message(if they are present)
 @VideoPoliceBot.event
 async def on_message(message):
     await VideoPoliceBot.process_commands(message)
     global ciocoflender_trigger
     if ciocoflender_trigger == 1:
         global radu_counter, andries_counter
-        if message.author.id == 134946430317101057 or message.author.id == 237625040181526528:
-            if random.randint(1, 10) == 1:
+        if not message.author.bot:
+            if random.randint(1, 100) <= 5:
                 await message.channel.send(file=discord.File('ciocoflender.jpg'))
                 print("L-am facut ciocoflender pe", message.author.name)
-            if message.author.id == 134946430317101057:
-                radu_counter += 1
-            else:
-                andries_counter += 1
     else:
         pass
+
+    mesaj = message.content
+    if not message.author.bot:
+        # count the custom emojis
+        while True:
+            x = mesaj.find(":")
+            if x == -1:
+                break
+            else:
+                mesaj = mesaj[:x] + "" + mesaj[x + 1:]
+                poz = mesaj.find(":")
+                emoji = mesaj[x:poz]
+                poz = mesaj.find(":")
+                emoji_id = mesaj[poz + 1:poz + 19]
+                mesaj = mesaj[:mesaj.find("<")] + "" + mesaj[mesaj.find(">") + 2:]
+
+                conn = sqlite3.connect('emojis.db')
+                curs = conn.cursor()
+                curs.execute("PRAGMA foreign_keys;")
+                for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                         "emoji_name = ?;", (message.author.id, emoji)):
+                    curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                                 "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                    conn.commit()
+                conn.close()
+
+        # count the default emojis
+        for char in mesaj:
+            if ord(char) > 1000:
+                conn = sqlite3.connect('emojis.db')
+                curs = conn.cursor()
+                curs.execute("PRAGMA foreign_keys;")
+                test_str = "A"
+                for item in curs.execute("SELECT id, emoji_name FROM emojis WHERE emoji_name = ?", (char,)):
+                    test_str = item[0]
+
+                if test_str == "A":
+                    id = numpy.random.randint(low=1000, high=999999999)
+                    curs.execute("INSERT INTO emojis (id, emoji_name) "
+                                 "VALUES (?, ?);", (id, char))
+                    curs.execute("INSERT INTO emoji_count (user_id, emoji_id, user_name, emoji_name, counter) "
+                                 "VALUES (?, ?, ?, ?, ?);",
+                                 (message.author.id, id, message.author.name, char, 1))
+                    conn.commit()
+                    print("Am adaugat ? la baza de date", (char,))
+                else:
+                    for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? "
+                                             "AND emoji_name = ?;", (message.author.id, char)):
+                        curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                                     "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                        conn.commit()
+                conn.close()
+
+
+# Adjusts emoji counter when a message is deleted
+@VideoPoliceBot.event
+async def on_message_delete(message):
+    mesaj = message.content
+    # count the custom emojis
+    while True:
+        x = mesaj.find(":")
+        if x == -1:
+            break
+        else:
+            mesaj = mesaj[:x] + "" + mesaj[x + 1:]
+            poz = mesaj.find(":")
+            emoji = mesaj[x:poz]
+            poz = mesaj.find(":")
+            emoji_id = mesaj[poz + 1:poz + 19]
+            mesaj = mesaj[:mesaj.find("<")] + "" + mesaj[mesaj.find(">") + 3:]
+
+            conn = sqlite3.connect('emojis.db')
+            curs = conn.cursor()
+            curs.execute("PRAGMA foreign_keys;")
+            for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                     "emoji_name = ?;", (message.author.id, emoji)):
+                curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                             "AND emoji_name = ?", (item[2] - 1, item[0], item[1]))
+                conn.commit()
+            conn.close()
+
+    # count the default emojis
+    for char in mesaj:
+        if ord(char) > 1000:
+            conn = sqlite3.connect('emojis.db')
+            curs = conn.cursor()
+            curs.execute("PRAGMA foreign_keys;")
+
+            for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                     "emoji_name = ?;", (message.author.id, char)):
+                curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                             "AND emoji_name = ?", (item[2] - 1, item[0], item[1]))
+                conn.commit()
+            conn.close()
+
+
+#Adjusts the emoji counter after a message has been edited
+@VideoPoliceBot.event
+async def on_message_edit(before, after):
+    # Handling the old message:
+    mesaj_old = before.content
+    # count the custom emojis
+    while True:
+        x = mesaj_old.find(":")
+        if x == -1:
+            break
+        else:
+            mesaj_old = mesaj_old[:x] + "" + mesaj_old[x + 1:]
+            poz = mesaj_old.find(":")
+            emoji = mesaj_old[x:poz]
+            poz = mesaj_old.find(":")
+            emoji_id = mesaj_old[poz + 1:poz + 19]
+            mesaj_old = mesaj_old[:mesaj_old.find("<")] + "" + mesaj_old[mesaj_old.find(">") + 3:]
+
+            conn = sqlite3.connect('emojis.db')
+            curs = conn.cursor()
+            curs.execute("PRAGMA foreign_keys;")
+            for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                     "emoji_name = ?;", (before.author.id, emoji)):
+                curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                             "AND emoji_name = ?", (item[2] - 1, item[0], item[1]))
+                conn.commit()
+            conn.close()
+
+    # count the default emojis
+    for char in mesaj_old:
+        if ord(char) > 1000:
+            conn = sqlite3.connect('emojis.db')
+            curs = conn.cursor()
+            curs.execute("PRAGMA foreign_keys;")
+
+            for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                     "emoji_name = ?;", (before.author.id, char)):
+                curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                             "AND emoji_name = ?", (item[2] - 1, item[0], item[1]))
+                conn.commit()
+            conn.close()
+
+    # Handling the new message
+    mesaj_new = after.content
+    # count the custom emojis
+    while True:
+        x = mesaj_new.find(":")
+        if x == -1:
+            break
+        else:
+            mesaj_new = mesaj_new[:x] + "" + mesaj_new[x + 1:]
+            poz = mesaj_new.find(":")
+            emoji = mesaj_new[x:poz]
+            poz = mesaj_new.find(":")
+            emoji_id = mesaj_new[poz + 1:poz + 19]
+            mesaj_new = mesaj_new[:mesaj_new.find("<")] + "" + mesaj_new[mesaj_new.find(">") + 3:]
+
+            conn = sqlite3.connect('emojis.db')
+            curs = conn.cursor()
+            curs.execute("PRAGMA foreign_keys;")
+            for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                     "emoji_name = ?;", (after.author.id, emoji)):
+                curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                             "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                conn.commit()
+            conn.close()
+
+    # count the default emojis
+    for char in mesaj_new:
+        if ord(char) > 1000:
+            conn = sqlite3.connect('emojis.db')
+            curs = conn.cursor()
+            curs.execute("PRAGMA foreign_keys;")
+
+            for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                     "emoji_name = ?;", (after.author.id, char)):
+                curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                             "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                conn.commit()
+            conn.close()
+
+
+# Adjusts emoji counter based on the emoji added via a reaction to a message
+@VideoPoliceBot.event
+async def on_raw_reaction_add(payload):
+    conn = sqlite3.connect('emojis.db')
+    curs = conn.cursor()
+    curs.execute("PRAGMA foreign_keys;")
+
+    if payload.emoji.id is None:
+        test_str = "A"
+        for item in curs.execute("SELECT id, emoji_name FROM emojis WHERE emoji_name = ?", (payload.emoji.name,)):
+            test_str = item[0]
+
+        if test_str == "A":
+            id = numpy.random.randint(low=1000, high=999999999)
+            curs.execute("INSERT INTO emojis (id, emoji_name) "
+                         "VALUES (?, ?);", (id, payload.emoji.name))
+            curs.execute("INSERT INTO emoji_count (user_id, emoji_id, user_name, emoji_name, counter) "
+                         "VALUES (?, ?, ?, ?, ?);",
+                         (payload.user_id, id, payload.member.name, payload.emoji.name, 1))
+            conn.commit()
+            print("Am adaugat ? la baza de date", (payload.emoji.name,))
+        else:
+            for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                     "emoji_name = ?;", (payload.user_id, payload.emoji.name)):
+                curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                             "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                conn.commit()
+
+    else:
+        for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                 "emoji_name = ?;", (payload.user_id, payload.emoji.name)):
+            curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                         "AND emoji_name = ?;", (item[2] + 1, item[0], item[1]))
+            conn.commit()
+            # print(item[2] + 1, item[0], item[1])
+    conn.close()
+
+
+# Adjust the emoji counter after a reaction has been removed
+@VideoPoliceBot.event
+async def on_raw_reaction_remove(payload):
+    conn = sqlite3.connect('emojis.db')
+    curs = conn.cursor()
+    curs.execute("PRAGMA foreign_keys;")
+
+    for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                             "emoji_name = ?;", (payload.user_id, payload.emoji.name)):
+        curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                     "AND emoji_name = ?;", (item[2] - 1, item[0], item[1]))
+        conn.commit()
+        # print(item[2] + 1, item[0], item[1])
+    conn.close()
 
 
 VideoPoliceBot.run(TOKEN)
