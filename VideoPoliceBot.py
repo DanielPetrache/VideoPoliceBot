@@ -211,7 +211,6 @@ async def on_message(message):
     await VideoPoliceBot.process_commands(message)
     global ciocoflender_trigger
     if ciocoflender_trigger == 1:
-        global radu_counter, andries_counter
         if not message.author.bot:
             if random.randint(1, 100) <= 5:
                 await message.channel.send(file=discord.File('ciocoflender.jpg'))
