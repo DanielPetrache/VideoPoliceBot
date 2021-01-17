@@ -89,14 +89,15 @@ async def top_emoji(ctx, user: str, number: int):
                 curs = conn.cursor()
                 curs.execute("PRAGMA foreign_keys;")
                 nr = 1
+                message = ""
                 for row in curs.execute("SELECT user_name, emoji_name, emoji_id, counter FROM emoji_count WHERE "
                                         "user_id = ? ORDER BY counter DESC LIMIT ?", (id_user, number)):
                     if int(row[2]) < 999999999:
-                        message = "Locul #" + str(nr) + " " + row[1] + ": " + str(row[3]) + " utilizari"
+                        message += "Locul #" + str(nr) + " " + row[1] + ": " + str(row[3]) + " utilizari\n"
                     else:
-                        message = "Locul #" + str(nr) + " <:" + row[1] + ":" + row[2] + "> : " + str(row[3]) + " utilizari"
+                        message += "Locul #" + str(nr) + " <:" + row[1] + ":" + row[2] + "> : " + str(row[3]) + " utilizari\n"
                     nr += 1
-                    await ctx.send(message)
+                await ctx.send(message)
                     # print(row)
                 conn.commit()
                 conn.close()
