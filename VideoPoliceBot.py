@@ -212,6 +212,7 @@ async def on_message(message):
     await VideoPoliceBot.process_commands(message)
     global ciocoflender_trigger
     if ciocoflender_trigger == 1:
+        global radu_counter, andries_counter
         if not message.author.bot:
             if random.randint(1, 100) <= 5:
                 await message.channel.send(file=discord.File('ciocoflender.jpg'))
@@ -237,12 +238,24 @@ async def on_message(message):
                 conn = sqlite3.connect('emojis.db')
                 curs = conn.cursor()
                 curs.execute("PRAGMA foreign_keys;")
-                for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
-                                         "emoji_name = ?;", (message.author.id, emoji)):
-                    curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
-                                 "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                test_str = "A"
+                for item in curs.execute("SELECT emoji_name FROM emojis WHERE emoji_name = ?", (emoji, )):
+                    test_str = item[0]
+                if test_str == "A":
+                    curs.execute("INSERT INTO emojis (id, emoji_name) "
+                                 "VALUES (?, ?);", (emoji_id, emoji))
+                    curs.execute("INSERT INTO emoji_count (user_id, emoji_id, user_name, emoji_name, counter) "
+                                 "VALUES (?, ?, ?, ?, ?);",
+                                 (message.author.id, emoji_id, message.author.name, emoji, 1))
                     conn.commit()
-                conn.close()
+                    print("Am adaugat ? la baza de date", (emoji,))
+                else:
+                    for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                             "emoji_name = ?;", (message.author.id, emoji)):
+                        curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                                     "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                        conn.commit()
+                    conn.close()
 
         # count the default emojis
         for char in mesaj:
