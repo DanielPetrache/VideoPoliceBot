@@ -9,7 +9,7 @@ TOKEN = ''
 intents = discord.Intents.default()
 intents.members = True
 descript = "!help - help me daddy \n!surveillance (on/off) - porneste politia sau o opreste\n!ciocoflender (on/off) - " \
-           "se uita sau nu dupa ciocoflenderi\n!populate_db - numai pentru cine trebuie\n!top_emoji (user, " \
+           "se uita sau nu dupa ciocoflenderi\n!populate_db - numai pentru cine trebuie\n!topemoji (user, " \
            "emoji_count) - afiseaza un top al celor emoji_count cele mai " \
            "folosite emoji-uri de catre user (emoji_count <= 15) "
 VideoPoliceBot = commands.Bot(command_prefix='!', description=descript, intents=intents)
@@ -55,7 +55,7 @@ async def populate_db(ctx):
 
 
 @VideoPoliceBot.command()
-async def top_emoji(ctx, user: str, number: int):
+async def topemoji(ctx, user: str, number: int):
     if type(number) != int or number < 1:
         await ctx.send("Trebuie sa folosesti un numar intreg intre 1 si 15!")
     else:
@@ -101,6 +101,30 @@ async def top_emoji(ctx, user: str, number: int):
                     # print(row)
                 conn.commit()
                 conn.close()
+
+
+@topemoji.error
+async def missing_parameters(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        comand = ctx.message.content
+        comand = comand.replace("!top_emoji", "")
+        if comand == "":
+            await topemoji(ctx, ctx.author.name, 5)
+        else:
+            number = ""
+            for char in comand:
+                if char.isdigit():
+                    number += char
+            if number == "":
+                comand = comand.replace(" ", "")
+                if comand == "":
+                    await topemoji(ctx, ctx.author.name, 5)
+                else:
+                    await topemoji(ctx, comand, 5)
+            else:
+                comand = comand.replace(number, "")
+                comand = comand.replace(" ", "")
+                await topemoji(ctx, ctx.author.name, int(number))
 
 
 @VideoPoliceBot.command()
@@ -212,7 +236,6 @@ async def on_message(message):
     await VideoPoliceBot.process_commands(message)
     global ciocoflender_trigger
     if ciocoflender_trigger == 1:
-        global radu_counter, andries_counter
         if not message.author.bot:
             if random.randint(1, 100) <= 5:
                 await message.channel.send(file=discord.File('ciocoflender.jpg'))
@@ -224,17 +247,15 @@ async def on_message(message):
     if not message.author.bot:
         # count the custom emojis
         while True:
-            x = mesaj.find(":")
+            x = mesaj.find("<")
+            y = mesaj.find(">")
             if x == -1:
                 break
             else:
-                mesaj = mesaj[:x] + "" + mesaj[x + 1:]
-                poz = mesaj.find(":")
-                emoji = mesaj[x:poz]
-                poz = mesaj.find(":")
-                emoji_id = mesaj[poz + 1:poz + 19]
-                mesaj = mesaj[:mesaj.find("<")] + "" + mesaj[mesaj.find(">") + 2:]
-
+                mesaj2 = mesaj[x+2:mesaj.find(">")]
+                emoji = mesaj2[:mesaj2.find(":")]
+                emoji_id = mesaj2[mesaj2.find(":")+1:]
+                mesaj = mesaj[y+1:]
                 conn = sqlite3.connect('emojis.db')
                 curs = conn.cursor()
                 curs.execute("PRAGMA foreign_keys;")
@@ -248,7 +269,7 @@ async def on_message(message):
                                  "VALUES (?, ?, ?, ?, ?);",
                                  (message.author.id, emoji_id, message.author.name, emoji, 1))
                     conn.commit()
-                    print("Am adaugat ? la baza de date", (emoji,))
+                    print("Am adaugat " + emoji + " la baza de date")
                 else:
                     for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
                                              "emoji_name = ?;", (message.author.id, emoji)):
@@ -275,7 +296,7 @@ async def on_message(message):
                                  "VALUES (?, ?, ?, ?, ?);",
                                  (message.author.id, id, message.author.name, char, 1))
                     conn.commit()
-                    print("Am adaugat ? la baza de date", (char,))
+                    print("Am adaugat " + char + " la baza de date")
                 else:
                     for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? "
                                              "AND emoji_name = ?;", (message.author.id, char)):
@@ -429,7 +450,7 @@ async def on_raw_reaction_add(payload):
                          "VALUES (?, ?, ?, ?, ?);",
                          (payload.user_id, id, payload.member.name, payload.emoji.name, 1))
             conn.commit()
-            print("Am adaugat ? la baza de date", (payload.emoji.name,))
+            print("Am adaugat " + payload.emoji.name + " la baza de date")
         else:
             for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
                                      "emoji_name = ?;", (payload.user_id, payload.emoji.name)):
