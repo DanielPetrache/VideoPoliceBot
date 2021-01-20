@@ -107,7 +107,7 @@ async def topemoji(ctx, user: str, number: int):
 async def missing_parameters(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         comand = ctx.message.content
-        comand = comand.replace("!top_emoji", "")
+        comand = comand.replace("!topemoji", "")
         if comand == "":
             await topemoji(ctx, ctx.author.name, 5)
         else:
@@ -280,7 +280,8 @@ async def on_message(message):
 
         # count the default emojis
         for char in mesaj:
-            if ord(char) > 1000:
+            if ord(char) >= 8986:
+                a = ord(char)
                 conn = sqlite3.connect('emojis.db')
                 curs = conn.cursor()
                 curs.execute("PRAGMA foreign_keys;")
