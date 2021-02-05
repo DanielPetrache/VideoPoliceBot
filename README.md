@@ -7,11 +7,11 @@ It's functionalities up to now are the following:
 
 PoliceBot looks for any voice channels where there are users with their webcams on. If half + 1 of those users has their webcams on, the bot will send a private message to each of those with their webcams off.
 
-![alt text](https://imgur.com/z16Rra1)
+![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/firstmessage.png)
 
 After receiving this message, the user has 15 seconds to turn their camera on, if not they will be disconnected from the channel and also receive another message from the bot.
 
-![alt text](https://imgur.com/khbk9C5)
+![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/disconnectmessage.png)
 
 # 2. Ciocoflenderposting
 
