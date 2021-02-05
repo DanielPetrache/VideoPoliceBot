@@ -29,7 +29,7 @@ After every message send by a user, be it text, or an embedded media, the bot ha
 
 The emoji counter provides a top of 5, up to 15 of the most used emojis for any user on the serve. It does this by making use of a simple SQL database to keep track of all the users on the server, the emojis, be it custom or default, and how many times each user has used each emoji.
 
-![alt text]()
+![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/topemoji.png)
 
 As it can be seen from the image abose the default structure of the topemoji command is the following:
 
@@ -39,7 +39,7 @@ However, the bot can handle cases that stray from the default format:
 
  - if user_name is missing, the bot will just provide the top emoji_number emojis for the user who entered the command;
 
- ![alt text]()
+ ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/nouserbutnumber.png)
 
  - if emoji_number is missing, the bot will provide the top 5 emojis for the requested user;
 
