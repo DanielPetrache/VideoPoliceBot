@@ -12,18 +12,12 @@ PoliceBot looks for any voice channels where there are users with their webcams 
 After receiving this message, the user has 15 seconds to turn their camera on, if not they will be disconnected from the channel and also receive another message from the bot.
 
 ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/disconnectmessage.png)
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 The bot does all this by getting a list of all the voice channels of the server, then iterating through every channel' users, if there are any, and keeping track if there are any with webcams on and how many. Also, after those 15 seconds have passed the bot checks the status of the users who didn't have their webcams on to see if any have changed.
 
 This feature can be turned on or off as follows:
 
 ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/surveillance.png)
-=======
->>>>>>> e4a32d3a12fb385571f40ae04732d377c5a4bd06
-=======
->>>>>>> e4a32d3a12fb385571f40ae04732d377c5a4bd06
 
 # 2. Ciocoflenderposting
 
@@ -33,8 +27,6 @@ After every message send by a user, be it text, or an embedded media, the bot ha
 
 # 3. Emoji Counter
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 The emoji counter provides a top of 5, up to 15 of the most used emojis for any user on the serve. It does this by making use of a simple SQL database to keep track of all the users on the server, the emojis, be it custom or default, and how many times each user has used each emoji.
 
 ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/topemoji.png)
@@ -58,9 +50,3 @@ However, the bot can handle cases that stray from the default format:
  ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/nouser.png)
 
  ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/nocount.png)
-=======
--It keeps track of how many times each emoji has been used by each member of the server using a SQLite database. Any user can see a top of up to 15 most used emojis for any user of the server.
->>>>>>> e4a32d3a12fb385571f40ae04732d377c5a4bd06
-=======
--It keeps track of how many times each emoji has been used by each member of the server using a SQLite database. Any user can see a top of up to 15 most used emojis for any user of the server.
->>>>>>> e4a32d3a12fb385571f40ae04732d377c5a4bd06
