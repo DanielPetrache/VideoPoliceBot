@@ -50,3 +50,11 @@ However, the bot can handle cases that stray from the default format:
  ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/nouser.png)
 
  ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/nocount.png)
+
+ # 4. Tic Tac Toe
+
+ By using the command !tictactoe @user1 @user2, the bot creates a private channel that can be seen only by the two tagged users. In this channel the two can play tic tac toe by using the command !place line column.
+
+  ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/tictactoecommand.png)
+
+  ![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/placecommand.png)
