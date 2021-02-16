@@ -4,16 +4,21 @@ import time
 import random
 import sqlite3
 import numpy
+# import logging
+import TicTacToeGame
 
+# logging.basicConfig(filename='bot.log', format='%(asctime)s %(message)s', level='INFO')
 TOKEN = ''
 intents = discord.Intents.default()
 intents.members = True
 descript = "!help - help me daddy \n!surveillance (on/off) - porneste politia sau o opreste\n!ciocoflender (on/off) - " \
            "se uita sau nu dupa ciocoflenderi\n!populate_db - numai pentru cine trebuie\n!topemoji (user, " \
            "emoji_count) - afiseaza un top al celor emoji_count cele mai " \
-           "folosite emoji-uri de catre user (emoji_count <= 15) "
+           "folosite emoji-uri de catre user (emoji_count <= 15)\n" \
+           "!tictactoe @user1 @user2 - incepe un meci de X si 0 intre cei doi useri pe un canal privat\n" \
+           "!place linie coloana - ii spune botului unde sa puna X-ul sau 0-ul"
 VideoPoliceBot = commands.Bot(command_prefix='!', description=descript, intents=intents)
-
+lista_jocuri = []
 trigger_instanta = 0
 ciocoflender_trigger = 0
 
@@ -24,6 +29,7 @@ async def on_ready():
     print(VideoPoliceBot.user.name)
     print(VideoPoliceBot.user.id)
     print('-----------')
+    # logging.info("-----Am pornit-----")
 
 
 @VideoPoliceBot.command()
@@ -72,7 +78,7 @@ async def topemoji(ctx, user: str, number: int):
                         member_dict[member.name.replace(" ", "")] = "nuamnickname"
 
                     try:
-                        if user.lower() == member.name.lower().replace(" ","") \
+                        if user.lower() == member.name.lower().replace(" ", "") \
                                 or user.lower() == member.nick.lower().replace(" ", ""):
                             id_user = str(member.id)
                             break
@@ -90,17 +96,20 @@ async def topemoji(ctx, user: str, number: int):
                 curs.execute("PRAGMA foreign_keys;")
                 nr = 1
                 message = ""
+
                 for row in curs.execute("SELECT user_name, emoji_name, emoji_id, counter FROM emoji_count WHERE "
                                         "user_id = ? ORDER BY counter DESC LIMIT ?", (id_user, number)):
                     if int(row[2]) < 999999999:
                         message += "Locul #" + str(nr) + " " + row[1] + ": " + str(row[3]) + " utilizari\n"
                     else:
-                        message += "Locul #" + str(nr) + " <:" + row[1] + ":" + row[2] + "> : " + str(row[3]) + " utilizari\n"
+                        message += "Locul #" + str(nr) + " <:" + row[1] + ":" + row[2] + "> : " + str(
+                            row[3]) + " utilizari\n"
                     nr += 1
                 await ctx.send(message)
-                    # print(row)
+                # print(row)
                 conn.commit()
                 conn.close()
+                # logging.info("Am afisat topul pentru " + user + " la comanda lui " + ctx.author.name)
 
 
 @topemoji.error
@@ -137,11 +146,13 @@ async def surveillance(ctx, trigger: str):
         else:
             await ctx.send(":police_officer: A venit Politia! :police_officer:")
             trigger_instanta = 1
+            # logging.info(ctx.author.name + " a chemat politia.")
     else:
         if trigger_instanta == 0:
             await ctx.send(":police_car: Politia a plecat deja! :police_car:")
         else:
             await ctx.send(":police_car: A plecat Politia! :police_car:")
+            # logging.info(ctx.author.name + " a izgonit politia.")
             trigger_instanta = 0
 
     while trigger_instanta:
@@ -182,6 +193,7 @@ async def surveillance(ctx, trigger: str):
                                     "cheeks. "
                                     ":wink:")
                                 print("L-am avertizat pe ", member.name)
+                                # logging.info("L-am avertizat pe ", member.name)
                             except Exception:
                                 print("N-am putut sa trimit mesaj lui", member.name)
                         else:
@@ -206,6 +218,7 @@ async def surveillance(ctx, trigger: str):
                                 try:
                                     await member.send("N-ai ce cauta pe canal fara webcam! :police_officer:")
                                     print("I-am dat kick lui ", member.name)
+                                    # logging.info("I-am dat kick lui ", member.name)
                                 except Exception:
                                     print("N-am putut sa trimit mesaj lui", member.name)
         print("Monitorizez canale")
@@ -222,18 +235,72 @@ async def ciocoflender(ctx, value: str):
         else:
             ciocoflender_trigger = 1
             await ctx.send(":eyes: Ma uit dupa ciocoflenderi! :eyes:")
+            # logging.info(ctx.author.name + " a pornit ciocoflenderii")
     else:
         if ciocoflender_trigger == 0:
             await ctx.send(":face_with_symbols_over_mouth: Sunt oprit deja! :face_with_symbols_over_mouth:")
         else:
             ciocoflender_trigger = 0
             await ctx.send(":sleeping: Nu ma mai uit dupa ciocoflenderi! :sleeping:")
+            # logging.info(ctx.author.name + " a oprit ciocoflenderii")
+
+
+# Tic Tac Toe
+@VideoPoliceBot.command()
+async def tictactoe(ctx, p1: discord.Member, p2: discord.Member):
+    check = True
+    for joc in lista_jocuri:
+        if (p1.nick == joc.player1 and p2.nick == joc.player2) or (p2.nick == joc.player1 and p1.nick == joc.player2):
+            check = False
+    if check:
+        role = await ctx.guild.create_role(name="Xsi0")
+        overwrites = {ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False),
+                      role: discord.PermissionOverwrite(view_channel=True)}
+        channel = await ctx.guild.create_text_channel(str(p1.nick) + "-si-" + str(p2.nick), position=5,
+                                                      overwrites=overwrites)
+        await p1.add_roles(role)
+        await p2.add_roles(role)
+        lista_jocuri.append(TicTacToeGame.Game(p1.nick, p2.nick, channel, role))
+        await channel.send(p1.mention + ' ' + p2.mention)
+        await channel.send("Comanda este !place linie coloana")
+        for row in lista_jocuri[-1].board:
+            message = ""
+            for item in row:
+                message += " " + item
+            await channel.send(message)
+        await channel.send("E randul tau, " + lista_jocuri[-1].turn)
+    else:
+        await ctx.send("Deja exista un joc intre " + p1.nick + " si " + p2.nick)
+
+
+@VideoPoliceBot.command()
+async def place(ctx, coord1: int, coord2: int):
+    check = True
+    for joc in lista_jocuri:
+        if joc.channel.id == ctx.channel.id:
+            check = False
+            if ctx.author.nick != joc.turn:
+                await ctx.send("Nu e randul tau.")
+            elif joc.place(coord1, coord2) == 0:
+                await ctx.send("Nu poti sa pui acolo!")
+            else:
+                for row in lista_jocuri[-1].board:
+                    message = ""
+                    for item in row:
+                        message += " " + item
+                    await joc.channel.send(message)
+                if joc.check_win():
+                    await ctx.send(joc.winner + ", ai castigat!\nJucati din nou?")
+                else:
+                    if joc.check_stalemate():
+                        await ctx.send("E egalitate.\nJucati din nou?")
+    if check:
+        await ctx.send("Nu e niciun joc de X si 0 in canalul asta.")
 
 
 # Counts the emojis from a regular message(if they are present)
 @VideoPoliceBot.event
 async def on_message(message):
-    await VideoPoliceBot.process_commands(message)
     global ciocoflender_trigger
     if ciocoflender_trigger == 1:
         if not message.author.bot:
@@ -242,8 +309,30 @@ async def on_message(message):
                 print("L-am facut ciocoflender pe", message.author.name)
     else:
         pass
-
     mesaj = message.content
+
+    # check if message is tictactoe response
+    mesaj2 = mesaj.lower()
+    for joc in lista_jocuri:
+        if message.channel.id == joc.channel.id and message.author.bot == False:
+            if (mesaj2 == "n" or mesaj2 == "nu") and (joc.gameOver == True):
+                await joc.channel.delete()
+                await joc.role.delete()
+                lista_jocuri.remove(joc)
+                del joc
+            elif mesaj2 == "y" or mesaj2 == "da":
+                joc.gameOver = False
+                joc.board = [[":white_large_square:", ":white_large_square:", ":white_large_square:"],
+                             [":white_large_square:", ":white_large_square:", ":white_large_square:"],
+                             [":white_large_square:", ":white_large_square:", ":white_large_square:"]]
+                for row in joc.board:
+                    message2 = ""
+                    for item in row:
+                        message2 += " " + item
+                    await joc.channel.send(message2)
+                await joc.channel.send("E randul tau, " + joc.turn)
+
+    # check for emojis
     if not message.author.bot:
         # count the custom emojis
         while True:
@@ -252,36 +341,40 @@ async def on_message(message):
             if x == -1:
                 break
             else:
-                mesaj2 = mesaj[x+2:mesaj.find(">")]
-                emoji = mesaj2[:mesaj2.find(":")]
-                emoji_id = mesaj2[mesaj2.find(":")+1:]
-                mesaj = mesaj[y+1:]
-                conn = sqlite3.connect('emojis.db')
-                curs = conn.cursor()
-                curs.execute("PRAGMA foreign_keys;")
-                test_str = "A"
-                for item in curs.execute("SELECT emoji_name FROM emojis WHERE emoji_name = ?", (emoji, )):
-                    test_str = item[0]
-                if test_str == "A":
-                    curs.execute("INSERT INTO emojis (id, emoji_name) "
-                                 "VALUES (?, ?);", (emoji_id, emoji))
-                    curs.execute("INSERT INTO emoji_count (user_id, emoji_id, user_name, emoji_name, counter) "
-                                 "VALUES (?, ?, ?, ?, ?);",
-                                 (message.author.id, emoji_id, message.author.name, emoji, 1))
-                    conn.commit()
-                    print("Am adaugat " + emoji + " la baza de date")
-                else:
-                    for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
-                                             "emoji_name = ?;", (message.author.id, emoji)):
-                        curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
-                                     "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                if mesaj[x + 1] != '@' and mesaj[x + 1] != '!':
+                    mesaj2 = mesaj[x + 2:mesaj.find(">")]
+                    emoji = mesaj2[:mesaj2.find(":")]
+                    emoji_id = mesaj2[mesaj2.find(":") + 1:]
+                    mesaj = mesaj[y + 1:]
+                    conn = sqlite3.connect('emojis.db')
+                    curs = conn.cursor()
+                    curs.execute("PRAGMA foreign_keys;")
+                    test_str = "A"
+                    for item in curs.execute("SELECT emoji_name FROM emojis WHERE emoji_name = ?", (emoji,)):
+                        test_str = item[0]
+                    if test_str == "A":
+                        curs.execute("INSERT INTO emojis (id, emoji_name) "
+                                     "VALUES (?, ?);", (emoji_id, emoji))
+                        curs.execute("INSERT INTO emoji_count (user_id, emoji_id, user_name, emoji_name, counter) "
+                                     "VALUES (?, ?, ?, ?, ?);",
+                                     (message.author.id, emoji_id, message.author.name, emoji, 1))
                         conn.commit()
-                    conn.close()
+                        print("Am adaugat " + emoji + " la baza de date")
+                        # logging.info("Am adaugat " + emoji + " la baza de date. Mesajul a fost: " + message.content)
+                    else:
+                        for item in curs.execute(
+                                "SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                "emoji_name = ?;", (message.author.id, emoji)):
+                            curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                                         "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                            conn.commit()
+                        conn.close()
+                else:
+                    break
 
         # count the default emojis
         for char in mesaj:
             if ord(char) >= 8986:
-                a = ord(char)
                 conn = sqlite3.connect('emojis.db')
                 curs = conn.cursor()
                 curs.execute("PRAGMA foreign_keys;")
@@ -298,6 +391,7 @@ async def on_message(message):
                                  (message.author.id, id, message.author.name, char, 1))
                     conn.commit()
                     print("Am adaugat " + char + " la baza de date")
+                    # logging.info("Am adaugat " + char + " la baza de date. Mesajul a fost: " + message.content)
                 else:
                     for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? "
                                              "AND emoji_name = ?;", (message.author.id, char)):
@@ -305,6 +399,7 @@ async def on_message(message):
                                      "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
                         conn.commit()
                 conn.close()
+    await VideoPoliceBot.process_commands(message)
 
 
 # Adjusts emoji counter when a message is deleted
@@ -349,7 +444,7 @@ async def on_message_delete(message):
             conn.close()
 
 
-#Adjusts the emoji counter after a message has been edited
+# Adjusts the emoji counter after a message has been edited
 @VideoPoliceBot.event
 async def on_message_edit(before, after):
     # Handling the old message:
@@ -452,6 +547,7 @@ async def on_raw_reaction_add(payload):
                          (payload.user_id, id, payload.member.name, payload.emoji.name, 1))
             conn.commit()
             print("Am adaugat " + payload.emoji.name + " la baza de date")
+            # logging.info("Am adaugat " + payload.emoji.name + " la baza de date. Mesajul a fost: ")
         else:
             for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
                                      "emoji_name = ?;", (payload.user_id, payload.emoji.name)):
