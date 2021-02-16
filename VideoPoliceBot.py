@@ -294,6 +294,8 @@ async def place(ctx, coord1: int, coord2: int):
                 else:
                     if joc.check_stalemate():
                         await ctx.send("E egalitate.\nJucati din nou?")
+                    else:
+                        await ctx.send("E randul tau, " + joc.turn)
     if check:
         await ctx.send("Nu e niciun joc de X si 0 in canalul asta.")
 
