@@ -12,7 +12,6 @@ class Emojis(commands.Cog):
         if type(number) != int or number < 1:
             await ctx.send("Trebuie sa folosesti un numar intreg intre 1 si 15!")
         else:
-            a = number
             if number > 15:
                 await ctx.send("Ia-o mai usor, incearca un nr <= 15")
             else:
@@ -65,7 +64,7 @@ class Emojis(commands.Cog):
             comand = ctx.message.content
             comand = comand.replace("!topemoji", "")
             if comand == "":
-                await self.topemoji(ctx, ctx.author, 5)
+                await self.topemoji(ctx, ctx.author.name, 5)
             else:
                 number = ""
                 for char in comand:
@@ -74,13 +73,13 @@ class Emojis(commands.Cog):
                 if number == "":
                     comand = comand.replace(" ", "")
                     if comand == "":
-                        await self.topemoji(ctx, ctx.author, 5)
+                        await self.topemoji(ctx, ctx.author.name, 5)
                     else:
                         await self.topemoji(ctx, comand, 5)
                 else:
                     comand = comand.replace(number, "")
                     comand = comand.replace(" ", "")
-                    await self.topemoji(ctx, ctx.author, int(number))
+                    await self.topemoji(ctx, ctx.author.name, int(number))
 
 
 def setup(bot):
