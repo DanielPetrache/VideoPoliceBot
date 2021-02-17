@@ -1,8 +1,8 @@
 import random
 
 
-class Game():
-    def __init__(self, p1, p2, channel, role):
+class Game:
+    def __init__(self, p1, p2, role):
         self.gameOver = False
         self.player1 = p1
         self.player2 = p2
@@ -14,7 +14,6 @@ class Game():
                               [(1, 0), (1, 1), (1, 2)], [(0, 0), (1, 1), (2, 2)],
                               [(0, 2), (1, 1), (2, 0)]]
         self.mark = random.randint(1, 2)
-        self.channel = channel
         if self.mark == 1:
             self.turn = p1
         else:
@@ -64,3 +63,4 @@ class Game():
             return True
         else:
             return False
+

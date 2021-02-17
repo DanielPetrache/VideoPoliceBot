@@ -1,14 +1,14 @@
 import discord
 from discord.ext import commands
-import time
 import random
 import sqlite3
 import numpy
+
 # import logging
-import TicTacToeGame
+
 
 # logging.basicConfig(filename='bot.log', format='%(asctime)s %(message)s', level='INFO')
-TOKEN = ''
+TOKEN = 'Nzk2MzE3MzgwMTMyNDcwODA0.X_WKWg.Zjkge3XpCenV8dDcKGUt3ZcdQ0k'
 intents = discord.Intents.default()
 intents.members = True
 descript = "!help - help me daddy \n!surveillance (on/off) - porneste politia sau o opreste\n!ciocoflender (on/off) - " \
@@ -18,7 +18,11 @@ descript = "!help - help me daddy \n!surveillance (on/off) - porneste politia sa
            "!tictactoe @user1 @user2 - incepe un meci de X si 0 intre cei doi useri pe un canal privat\n" \
            "!place linie coloana - ii spune botului unde sa puna X-ul sau 0-ul"
 VideoPoliceBot = commands.Bot(command_prefix='!', description=descript, intents=intents)
-lista_jocuri = []
+
+extentions = ['TicTacToe', 'emojis', 'surveillance']
+for item in extentions:
+    VideoPoliceBot.load_extension(item)
+
 trigger_instanta = 0
 ciocoflender_trigger = 0
 
@@ -61,171 +65,6 @@ async def populate_db(ctx):
 
 
 @VideoPoliceBot.command()
-async def topemoji(ctx, user: str, number: int):
-    if type(number) != int or number < 1:
-        await ctx.send("Trebuie sa folosesti un numar intreg intre 1 si 15!")
-    else:
-        if number > 15:
-            await ctx.send("Ia-o mai usor, incearca un nr <= 15")
-        else:
-            id_user = "xxx"
-            member_dict = {}
-            for member in ctx.guild.members:
-                if not member.bot:
-                    if member.nick:
-                        member_dict[member.name.replace(" ", "")] = member.nick.replace(" ", "")
-                    else:
-                        member_dict[member.name.replace(" ", "")] = "nuamnickname"
-
-                    try:
-                        if user.lower() == member.name.lower().replace(" ", "") \
-                                or user.lower() == member.nick.lower().replace(" ", ""):
-                            id_user = str(member.id)
-                            break
-                    except AttributeError:
-                        if user.lower() == member.name.lower().replace(" ", ""):
-                            id_user = str(member.id)
-                            break
-
-            if id_user == "xxx":
-                s = "Nu exista " + user + " pe server"
-                await ctx.send(s)
-            else:
-                conn = sqlite3.connect('emojis.db')
-                curs = conn.cursor()
-                curs.execute("PRAGMA foreign_keys;")
-                nr = 1
-                message = ""
-
-                for row in curs.execute("SELECT user_name, emoji_name, emoji_id, counter FROM emoji_count WHERE "
-                                        "user_id = ? ORDER BY counter DESC LIMIT ?", (id_user, number)):
-                    if int(row[2]) < 999999999:
-                        message += "Locul #" + str(nr) + " " + row[1] + ": " + str(row[3]) + " utilizari\n"
-                    else:
-                        message += "Locul #" + str(nr) + " <:" + row[1] + ":" + row[2] + "> : " + str(
-                            row[3]) + " utilizari\n"
-                    nr += 1
-                await ctx.send(message)
-                # print(row)
-                conn.commit()
-                conn.close()
-                # logging.info("Am afisat topul pentru " + user + " la comanda lui " + ctx.author.name)
-
-
-@topemoji.error
-async def missing_parameters(ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
-        comand = ctx.message.content
-        comand = comand.replace("!topemoji", "")
-        if comand == "":
-            await topemoji(ctx, ctx.author.name, 5)
-        else:
-            number = ""
-            for char in comand:
-                if char.isdigit():
-                    number += char
-            if number == "":
-                comand = comand.replace(" ", "")
-                if comand == "":
-                    await topemoji(ctx, ctx.author.name, 5)
-                else:
-                    await topemoji(ctx, comand, 5)
-            else:
-                comand = comand.replace(number, "")
-                comand = comand.replace(" ", "")
-                await topemoji(ctx, ctx.author.name, int(number))
-
-
-@VideoPoliceBot.command()
-async def surveillance(ctx, trigger: str):
-    global trigger_instanta
-
-    if trigger == 'on':
-        if trigger_instanta == 1:
-            await ctx.send(":cop: Politia e deja aici! :cop:")
-        else:
-            await ctx.send(":police_officer: A venit Politia! :police_officer:")
-            trigger_instanta = 1
-            # logging.info(ctx.author.name + " a chemat politia.")
-    else:
-        if trigger_instanta == 0:
-            await ctx.send(":police_car: Politia a plecat deja! :police_car:")
-        else:
-            await ctx.send(":police_car: A plecat Politia! :police_car:")
-            # logging.info(ctx.author.name + " a izgonit politia.")
-            trigger_instanta = 0
-
-    while trigger_instanta:
-        voice_channels = []
-        channels = await ctx.guild.fetch_channels()
-        for channel in channels:
-            if channel.type.name == 'voice':
-                voice_channels.append(channel)
-        for channel in voice_channels:
-            channel_members = []
-            video_already_on = []
-            video_number = 0
-            no_video_number = 0
-            # print(channel)
-            for i in channel.voice_states:
-                # print(i)
-                if channel.voice_states[i].self_video:
-                    video_number += 1
-                else:
-                    for member in channel.members:
-                        if i == member.id:
-                            if not member.bot:
-                                no_video_number += 1
-                                channel_members.append(i)
-            # print(video_number, no_video_number)
-            # print(channel_members)
-            if video_number + no_video_number != 0:
-                if video_number / (video_number + no_video_number) >= 0.5:
-                    # print("######################")
-                    member_with_no_video = False
-                    for member in channel.members:
-                        if not channel.voice_states[member.id].self_video and not member.bot and not \
-                                channel.voice_states[member.id].self_deaf:
-                            member_with_no_video = True
-                            try:
-                                await member.send(
-                                    "Salut, ai 15 secunde sa pornesti webcam-ul, otherwise I will clap your "
-                                    "cheeks. "
-                                    ":wink:")
-                                print("L-am avertizat pe ", member.name)
-                                # logging.info("L-am avertizat pe ", member.name)
-                            except Exception:
-                                print("N-am putut sa trimit mesaj lui", member.name)
-                        else:
-                            video_already_on.append(member.id)
-                    if member_with_no_video:
-                        t1 = time.time()
-                        while True:
-                            if (time.time() - t1) >= 15:
-                                break
-
-                        for member in channel.members:
-                            new_channel = await VideoPoliceBot.fetch_channel(channel.id)
-                            if (new_channel.voice_states[member.id].self_video is True) and (
-                                    not (member.id in video_already_on)) and not member.bot:
-                                try:
-                                    await member.send("Ai pornit, bravo! :hugging:")
-                                except Exception:
-                                    print("N-am putut sa trimit mesaj lui", member.name)
-                            elif not new_channel.voice_states[member.id].self_video and not member.bot and not \
-                                    channel.voice_states[member.id].self_deaf:
-                                await member.move_to(None)
-                                try:
-                                    await member.send("N-ai ce cauta pe canal fara webcam! :police_officer:")
-                                    print("I-am dat kick lui ", member.name)
-                                    # logging.info("I-am dat kick lui ", member.name)
-                                except Exception:
-                                    print("N-am putut sa trimit mesaj lui", member.name)
-        print("Monitorizez canale")
-        time.sleep(10)
-
-
-@VideoPoliceBot.command()
 async def ciocoflender(ctx, value: str):
     global ciocoflender_trigger
     if value == 'on':
@@ -245,61 +84,6 @@ async def ciocoflender(ctx, value: str):
             # logging.info(ctx.author.name + " a oprit ciocoflenderii")
 
 
-# Tic Tac Toe
-@VideoPoliceBot.command()
-async def tictactoe(ctx, p1: discord.Member, p2: discord.Member):
-    check = True
-    for joc in lista_jocuri:
-        if (p1.nick == joc.player1 and p2.nick == joc.player2) or (p2.nick == joc.player1 and p1.nick == joc.player2):
-            check = False
-    if check:
-        role = await ctx.guild.create_role(name="Xsi0")
-        overwrites = {ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False),
-                      role: discord.PermissionOverwrite(view_channel=True)}
-        channel = await ctx.guild.create_text_channel(str(p1.nick) + "-si-" + str(p2.nick), position=5,
-                                                      overwrites=overwrites)
-        await p1.add_roles(role)
-        await p2.add_roles(role)
-        lista_jocuri.append(TicTacToeGame.Game(p1.nick, p2.nick, channel, role))
-        await channel.send(p1.mention + ' ' + p2.mention)
-        await channel.send("Comanda este !place linie coloana")
-        for row in lista_jocuri[-1].board:
-            message = ""
-            for item in row:
-                message += " " + item
-            await channel.send(message)
-        await channel.send("E randul tau, " + lista_jocuri[-1].turn)
-    else:
-        await ctx.send("Deja exista un joc intre " + p1.nick + " si " + p2.nick)
-
-
-@VideoPoliceBot.command()
-async def place(ctx, coord1: int, coord2: int):
-    check = True
-    for joc in lista_jocuri:
-        if joc.channel.id == ctx.channel.id:
-            check = False
-            if ctx.author.nick != joc.turn:
-                await ctx.send("Nu e randul tau.")
-            elif joc.place(coord1, coord2) == 0:
-                await ctx.send("Nu poti sa pui acolo!")
-            else:
-                for row in lista_jocuri[-1].board:
-                    message = ""
-                    for item in row:
-                        message += " " + item
-                    await joc.channel.send(message)
-                if joc.check_win():
-                    await ctx.send(joc.winner + ", ai castigat!\nJucati din nou?")
-                else:
-                    if joc.check_stalemate():
-                        await ctx.send("E egalitate.\nJucati din nou?")
-                    else:
-                        await ctx.send("E randul tau, " + joc.turn)
-    if check:
-        await ctx.send("Nu e niciun joc de X si 0 in canalul asta.")
-
-
 # Counts the emojis from a regular message(if they are present)
 @VideoPoliceBot.event
 async def on_message(message):
@@ -315,24 +99,24 @@ async def on_message(message):
 
     # check if message is tictactoe response
     mesaj2 = mesaj.lower()
-    for joc in lista_jocuri:
-        if message.channel.id == joc.channel.id and message.author.bot == False:
-            if (mesaj2 == "n" or mesaj2 == "nu") and (joc.gameOver == True):
-                await joc.channel.delete()
-                await joc.role.delete()
-                lista_jocuri.remove(joc)
-                del joc
+    for key, value in VideoPoliceBot.get_cog('TicTacToe').game_map.items():
+        if message.channel.id == key and message.author.bot == False:
+            if (mesaj2 == "n" or mesaj2 == "nu") and (value.gameOver == True):
+                await message.channel.delete()
+                await value.role.delete()
+                VideoPoliceBot.get_cog('TicTacToe').game_map.pop(value)
+                del value
             elif mesaj2 == "y" or mesaj2 == "da":
-                joc.gameOver = False
-                joc.board = [[":white_large_square:", ":white_large_square:", ":white_large_square:"],
+                value.gameOver = False
+                value.board = [[":white_large_square:", ":white_large_square:", ":white_large_square:"],
                              [":white_large_square:", ":white_large_square:", ":white_large_square:"],
                              [":white_large_square:", ":white_large_square:", ":white_large_square:"]]
-                for row in joc.board:
+                for row in value.board:
                     message2 = ""
                     for item in row:
                         message2 += " " + item
-                    await joc.channel.send(message2)
-                await joc.channel.send("E randul tau, " + joc.turn)
+                    await value.channel.send(message2)
+                await value.channel.send("E randul tau, " + value.turn)
 
     # check for emojis
     if not message.author.bot:
@@ -583,4 +367,4 @@ async def on_raw_reaction_remove(payload):
     conn.close()
 
 
-VideoPoliceBot.run(TOKEN)
+VideoPoliceBot.run(TOKEN, bot=True, reconnect=True)
