@@ -64,3 +64,4 @@ Afterwhich, players alternate by using the command '!place line column', until o
 
 When match is finished, the players can choose to go for another one, in which case the bot resets the board, or they can stop, which prompts the bot to delete the channel and remove the tic tac toe role from the two users.
 
+![alt text](https://github.com/DanielPetrache/VideoPoliceBot/blob/main/pictures/endgame.png)
