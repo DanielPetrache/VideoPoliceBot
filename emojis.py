@@ -3,7 +3,7 @@ from discord.ext import commands
 import sqlite3
 
 
-class Emojis_class(commands.Cog):
+class Emojis(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -132,4 +132,4 @@ class Emojis_class(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Emojis_class(bot))
+    bot.add_cog(Emojis(bot))

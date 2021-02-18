@@ -3,13 +3,13 @@ from discord.ext import commands
 import random
 import sqlite3
 import numpy
-from Emojis import Emojis_class
-from TicTacToe import TicTacToe_class
+from Emojis import Emojis
+from TicTacToe import TicTacToe
 # import logging
 
 
 # logging.basicConfig(filename='bot.log', format='%(asctime)s %(message)s', level='INFO')
-TOKEN = ''
+TOKEN = 'Nzk2MzE3MzgwMTMyNDcwODA0.X_WKWg.zBsacCT8R8xQzvIK12H2tE72yd4'
 intents = discord.Intents.default()
 intents.members = True
 descript = "!help - help me daddy \n!surveillance (on/off) - porneste politia sau o opreste\n!ciocoflender (on/off) - " \
@@ -99,7 +99,7 @@ async def on_message(message):
     mesaj = message.content
 
     # check if message is tictactoe response
-    await TicTacToe_class.check_tictactoe_response(mesaj.lower(), message, VideoPoliceBot)
+    await TicTacToe.check_tictactoe_response(mesaj.lower(), message, VideoPoliceBot.get_cog('TicTacToe').game_map)
 
     # check for emojis
     if not message.author.bot:
@@ -298,13 +298,13 @@ async def on_message_edit(before, after):
 # Adjusts emoji counter based on the emoji added via a reaction to a message
 @VideoPoliceBot.event
 async def on_raw_reaction_add(payload):
-    await Emojis_class.handle_reaction_add(payload)
+    await Emojis.handle_reaction_add(payload)
 
 
 # Adjust the emoji counter after a reaction has been removed
 @VideoPoliceBot.event
 async def on_raw_reaction_remove(payload):
-    await Emojis_class.handle_reaction_edit(payload)
+    await Emojis.handle_reaction_edit(payload)
 
 
 VideoPoliceBot.run(TOKEN, bot=True, reconnect=True)

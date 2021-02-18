@@ -3,19 +3,18 @@ from discord.ext import commands
 import TicTacToeGame
 
 
-class TicTacToe_class(commands.Cog):
+class TicTacToe(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.game_map = {}
 
     @staticmethod
-    async def check_tictactoe_response(mesaj, message, VideoPoliceBot):
-        for key, value in VideoPoliceBot.get_cog('TicTacToe').game_map.items():
+    async def check_tictactoe_response(mesaj, message, map):
+        for key, value in map.items():
             if message.channel.id == key and message.author.bot == False:
                 if (mesaj == "n" or mesaj == "nu") and (value.gameOver == True):
                     await message.channel.delete()
                     await value.role.delete()
-                    a = VideoPoliceBot.get_cog('TicTacToe').game_map
                     VideoPoliceBot.get_cog('TicTacToe').game_map.pop(value)
                     del value
                 elif mesaj == "y" or mesaj == "da":
@@ -87,4 +86,4 @@ class TicTacToe_class(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(TicTacToe_class(bot))
+    bot.add_cog(TicTacToe(bot))
