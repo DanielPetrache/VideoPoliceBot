@@ -9,7 +9,7 @@ from TicTacToe import TicTacToe
 
 
 # logging.basicConfig(filename='bot.log', format='%(asctime)s %(message)s', level='INFO')
-TOKEN = 'Nzk2MzE3MzgwMTMyNDcwODA0.X_WKWg.zBsacCT8R8xQzvIK12H2tE72yd4'
+TOKEN = ''
 intents = discord.Intents.default()
 intents.members = True
 descript = "!help - help me daddy \n!surveillance (on/off) - porneste politia sau o opreste\n!ciocoflender (on/off) - " \
