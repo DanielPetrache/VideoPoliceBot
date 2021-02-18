@@ -3,10 +3,32 @@ from discord.ext import commands
 import TicTacToeGame
 
 
-class TicTacToe(commands.Cog):
+class TicTacToe_class(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.game_map = {}
+
+    @staticmethod
+    async def check_tictactoe_response(mesaj, message, VideoPoliceBot):
+        for key, value in VideoPoliceBot.get_cog('TicTacToe').game_map.items():
+            if message.channel.id == key and message.author.bot == False:
+                if (mesaj == "n" or mesaj == "nu") and (value.gameOver == True):
+                    await message.channel.delete()
+                    await value.role.delete()
+                    a = VideoPoliceBot.get_cog('TicTacToe').game_map
+                    VideoPoliceBot.get_cog('TicTacToe').game_map.pop(value)
+                    del value
+                elif mesaj == "y" or mesaj == "da":
+                    value.gameOver = False
+                    value.board = [[":white_large_square:", ":white_large_square:", ":white_large_square:"],
+                                   [":white_large_square:", ":white_large_square:", ":white_large_square:"],
+                                   [":white_large_square:", ":white_large_square:", ":white_large_square:"]]
+                    for row in value.board:
+                        message2 = ""
+                        for item in row:
+                            message2 += " " + item
+                        await value.channel.send(message2)
+                    await value.channel.send("E randul tau, " + value.turn)
 
     @commands.command()
     async def tictactoe(self, ctx, p1: discord.Member, p2: discord.Member):
@@ -65,4 +87,4 @@ class TicTacToe(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(TicTacToe(bot))
+    bot.add_cog(TicTacToe_class(bot))

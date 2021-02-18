@@ -1,11 +1,60 @@
-import discord
+import numpy
 from discord.ext import commands
 import sqlite3
 
 
-class Emojis(commands.Cog):
+class Emojis_class(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @staticmethod
+    async def handle_reaction_add(payload):
+        conn = sqlite3.connect('emojis.db')
+        curs = conn.cursor()
+        curs.execute("PRAGMA foreign_keys;")
+        if payload.emoji.id is None:
+            test_str = "A"
+            for item in curs.execute("SELECT id, emoji_name FROM emojis WHERE emoji_name = ?", (payload.emoji.name,)):
+                test_str = item[0]
+
+            if test_str == "A":
+                emoji_id = numpy.random.randint(low=1000, high=999999999)
+                curs.execute("INSERT INTO emojis (id, emoji_name) "
+                             "VALUES (?, ?);", (emoji_id, payload.emoji.name))
+                curs.execute("INSERT INTO emoji_count (user_id, emoji_id, user_name, emoji_name, counter) "
+                             "VALUES (?, ?, ?, ?, ?);",
+                             (payload.user_id, emoji_id, payload.member.name, payload.emoji.name, 1))
+                conn.commit()
+                print("Am adaugat " + payload.emoji.name + " la baza de date")
+                # logging.info("Am adaugat " + payload.emoji.name + " la baza de date. Mesajul a fost: ")
+            else:
+                for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                         "emoji_name = ?;", (payload.user_id, payload.emoji.name)):
+                    curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                                 "AND emoji_name = ?", (item[2] + 1, item[0], item[1]))
+                    conn.commit()
+
+        else:
+            for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                     "emoji_name = ?;", (payload.user_id, payload.emoji.name)):
+                curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                             "AND emoji_name = ?;", (item[2] + 1, item[0], item[1]))
+                conn.commit()
+                # print(item[2] + 1, item[0], item[1])
+        conn.close()
+
+    @staticmethod
+    async def handle_reaction_edit(payload):
+        conn = sqlite3.connect('emojis.db')
+        curs = conn.cursor()
+        curs.execute("PRAGMA foreign_keys;")
+        for item in curs.execute("SELECT user_id, emoji_name, counter FROM emoji_count WHERE user_id = ? AND "
+                                 "emoji_name = ?;", (payload.user_id, payload.emoji.name)):
+            curs.execute("UPDATE emoji_count SET counter = ? WHERE user_id = ? "
+                         "AND emoji_name = ?;", (item[2] - 1, item[0], item[1]))
+            conn.commit()
+            # print(item[2] + 1, item[0], item[1])
+        conn.close()
 
     @commands.command()
     async def topemoji(self, ctx, user: str, number: int):
@@ -83,4 +132,4 @@ class Emojis(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Emojis(bot))
+    bot.add_cog(Emojis_class(bot))
